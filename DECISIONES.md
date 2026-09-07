@@ -82,6 +82,32 @@ objetivo es medir y explicar, no alcanzar un número.
 esperado USD 5 a 15. Claves en `.env`, nunca al repo. Límite de gasto mensual en OpenAI
 fijado en USD 20 con corte estricto, más alertas al 80% y 100%.
 
+### 0.3 (ajuste tras Bloque A) Alcance de Fase 1
+
+CodiEsp-D es una tarea **multietiqueta a nivel de caso**: el gold lista todos los
+códigos de diagnóstico del caso (media ~11 por caso), **sin distinguir principal de
+secundarios**. Por lo tanto:
+
+- La evaluación de Fase 1 es predicción del *conjunto* de códigos CIE-10 de diagnóstico
+  del caso. Métrica oficial de CodiEsp-D: **MAP** (mean average precision); se reportan
+  además precisión, recall y F1 a nivel de código (micro).
+- La distinción principal / secundario que hará el LLM es útil para el producto y el
+  análisis GRD, pero **no se puede evaluar contra CodiEsp**. No es criterio de éxito de
+  Fase 1.
+
+### 0.4 (ajuste tras Bloque A) Base de conocimiento
+
+El `CIE-10.xlsx` de proyecto5 es la versión **OMS 2013** (códigos de 3-4 caracteres).
+CodiEsp usa **CIE-10-ES 2018** (ICD-10-CM para diagnósticos, ICD-10-PCS para
+procedimientos). No son compatibles. La base de conocimiento del proyecto es la
+**lista oficial de códigos válidos de CodiEsp** (Zenodo 3706838, CC-BY 4.0):
+
+- `codiesp-D_codes.tsv`: 98.288 diagnósticos, `codigo <TAB> desc_es <TAB> desc_en`.
+- `codiesp-P_codes.tsv`: 87.170 procedimientos.
+- Cobertura verificada: el 100% de los códigos gold de train/dev/test está en esta lista.
+
+El `CIE-10.xlsx` OMS se conserva en `data/` solo como referencia, no se usa.
+
 ### 0.5 Entorno
 
 - Python 3.14.6, `venv` local en `.venv/`.

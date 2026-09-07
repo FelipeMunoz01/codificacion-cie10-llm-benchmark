@@ -16,7 +16,15 @@ un benchmark público, con análisis de errores y ablations.
 
 ## Estado actual
 
-`FASE 0 - completa. Siguiente: Fase 1, Bloque A (datos).`
+`FASE 1 - Bloque A completo (1.1 a 1.4). Siguiente: Bloque B (índice de recuperación).`
+
+Hallazgos de Bloque A (detalle en `resultados/eda_bloque_a.md`):
+- 500 / 250 / 250 casos (train / dev / test), ~11 códigos de diagnóstico por caso,
+  textos de ~350 palabras.
+- CodiEsp-D es multietiqueta a nivel de caso, sin principal vs secundario (ver DECISIONES).
+- Diccionario CIE-10-ES: 98.288 códigos, cobertura del gold 100%.
+- Solo el 62% de los códigos de test aparece en train: argumento fuerte para el enfoque
+  RAG + LLM sin entrenamiento, que no depende de haber visto antes el código.
 
 Marca cada casilla al terminar. "Listo cuando" define el criterio de término de cada paso.
 
@@ -42,19 +50,14 @@ Marca cada casilla al terminar. "Listo cuando" define el criterio de término de
 
 ### Bloque A: Datos
 
-- [ ] **1.1 Descargar CodiEsp** (train / dev / test) desde Zenodo. Entender el formato:
-  archivos de texto de casos clínicos + archivos de anotaciones (id, código, tipo).
-  *Listo cuando:* los tres conjuntos están en `data/` y se entiende cada columna.
-- [ ] **1.2 Cargar a pandas.** Un dataframe de casos (`id`, `texto`) y otro de anotaciones
-  (`id`, `codigo`, `tipo` diagnostico/procedimiento).
-  *Listo cuando:* ambos dataframes cargan y cuadran los conteos con la doc de CodiEsp.
-- [ ] **1.3 Diccionario CIE-10 oficial en español.** Usar el `CIE-10.xlsx` de
-  `proyecto5/referencias`. Verificar que cubre los códigos que aparecen en CodiEsp
-  (reportar % de cobertura).
-  *Listo cuando:* se sabe qué fracción de códigos de CodiEsp existe en el diccionario.
-- [ ] **1.4 EDA rápido.** Nº de casos, códigos por caso, distribución, códigos más
-  frecuentes, largo de los textos.
-  *Listo cuando:* hay 4 o 5 gráficos y un párrafo de conclusiones.
+- [x] **1.1 Descargar CodiEsp.** Corpus v4 (Zenodo 3837305, incluye test con gold) +
+  lista de códigos válidos (Zenodo 3706838). En `data/codiesp/`, git lo ignora.
+- [x] **1.2 Cargar a pandas.** Loaders en `src/datos.py`: `cargar_casos`, `cargar_gold`,
+  `cargar_spans`, `cargar_diccionario`. Conteos cuadran con la doc (1000 casos).
+- [x] **1.3 Diccionario.** El `CIE-10.xlsx` OMS no sirve (ver DECISIONES). Se usa la lista
+  oficial CIE-10-ES de CodiEsp. Cobertura del gold: 100%.
+- [x] **1.4 EDA.** `src/eda_bloque_a.py` → `resultados/eda_bloque_a.md`. Falta pasar los
+  gráficos al notebook (paso 1.20).
 
 ### Bloque B: Base de conocimiento e índice de recuperación
 
