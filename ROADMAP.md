@@ -16,7 +16,15 @@ un benchmark público, con análisis de errores y ablations.
 
 ## Estado actual
 
-`FASE 1 - Bloques A y B completos. Siguiente: Bloque C (codificador LLM).`
+`FASE 1 - Bloques A, B y C hechos. Bloque D en curso (dev/test completos + análisis).`
+
+Resultados preliminares del codificador (dev, gpt-4o-mini con candidatos):
+- MAP exacto ~0,10, MAP categoría (3 car.) ~0,29, alucinación ~0,05/caso.
+- gpt-4o casi dobla: MAP exacto ~0,23, categoría ~0,41 (14x el costo).
+- Los candidatos casi no mueven el MAP exacto pero cortan la alucinación 8x
+  (0,39 -> 0,05) y suben la especificidad. Su valor es anclar, no acertar más.
+- El prompt exhaustivo es clave: el prompt mínimo predice 6 códigos/caso (gold ~13)
+  y el recall cae a 0,11.
 
 Hallazgos de Bloque A (`resultados/eda_bloque_a.md`):
 - 500 / 250 / 250 casos, ~11 códigos de diagnóstico por caso, textos ~350 palabras.
@@ -80,40 +88,29 @@ Marca cada casilla al terminar. "Listo cuando" define el criterio de término de
 
 ### Bloque C: El codificador (LLM)
 
-- [ ] **1.10 Diseñar el prompt.** Entrada: texto + candidatos. Salida: JSON con diagnóstico
-  principal, secundarios y la frase del texto que justifica cada uno.
-  *Listo cuando:* el prompt está en un archivo versionado, no suelto en el notebook.
-- [ ] **1.11 Salida estructurada.** Esquema Pydantic + parser con reintentos si el JSON
-  viene mal formado.
-  *Listo cuando:* 20 llamadas seguidas devuelven objetos válidos.
-- [ ] **1.12 Función end-to-end.** `caso -> retrieval -> LLM -> lista de códigos predichos`.
-  *Listo cuando:* corre sobre 1 caso y devuelve códigos con justificación.
-- [ ] **1.13 Iterar el prompt a mano** con 10 a 20 casos.
-  *Listo cuando:* el output se ve estable y sensato en esos casos.
+- [x] **1.10 Prompt** en `src/codificador.py` (`SISTEMA`), versionado. Salida JSON con
+  código + evidencia textual. Variante `SISTEMA_MIN` para el ablation.
+- [x] **1.11 Salida estructurada.** `response_format` json_schema estricto + validación
+  contra los 98.288 códigos válidos + resolución de códigos sin punto + retry 429.
+- [x] **1.12 Función end-to-end.** `Codificador.codificar(texto, candidatos)`.
+- [x] **1.13 Iteración del prompt.** Prompt exhaustivo (síntomas, tabaco, Z-codes,
+  "no especificado") tras ver que el mínimo subcodifica.
 
 ### Bloque D: Evaluación (el núcleo del proyecto)
 
-- [ ] **1.14 Métricas CodiEsp.** Precisión, recall, F1 a nivel de código y MAP. Manejar
-  bien los códigos parciales (3 vs 4-5 caracteres).
-  *Listo cuando:* las métricas reproducen el formato oficial de CodiEsp sobre un ejemplo.
-- [ ] **1.15 Corrida base sobre dev completo.** Obtener el primer número honesto.
-  *Listo cuando:* hay un F1 base guardado en `resultados/`.
-- [ ] **1.16 Ablations** (cada uno = una corrida y una fila de tabla):
-  - [ ] solo LLM sin retrieval
-  - [ ] retrieval denso vs híbrido
-  - [ ] k = 10 vs 20 vs 50 candidatos
-  - [ ] prompt mínimo vs prompt con reglas del cuaderno NotebookLM
-  - [ ] modelo LLM barato vs mediano
-  *Listo cuando:* hay una tabla comparativa completa.
-- [ ] **1.17 Análisis de errores.** Revisar 30 casos fallados, clasificar el tipo de error
-  (3 vs 4 caracteres, categoría rara, confusión principal/secundario, alucinación de
-  código inexistente), tabla resumen.
-  *Listo cuando:* hay una tabla de tipos de error con conteos y ejemplos.
-- [ ] **1.18 Corrida final sobre test** (UNA sola vez) con la mejor configuración.
-  Comparar honesto con el leaderboard de CodiEsp.
-  *Listo cuando:* hay un número de test y un párrafo de comparación con la literatura.
-- [ ] **1.19 Costo y latencia** por caso, proyección a escala (codificar N epicrisis).
-  *Listo cuando:* hay una estimación en pesos y segundos por caso.
+- [x] **1.14 Métricas.** `src/eval_codificador.py`: MAP (oficial CodiEsp-D), P/R/F1
+  micro exacto y por categoría de 3 caracteres, alucinación, coste. Cache de predicciones.
+- [x] **1.15 Corrida base dev.** gpt-4o-mini con candidatos. En `resultados/`.
+- [x] **1.16 Ablations** (`resultados/eval_codificador.jsonl`):
+  - [x] LLM solo (sin candidatos) vs con candidatos
+  - [x] prompt exhaustivo vs prompt mínimo
+  - [x] few-shot vs zero-shot
+  - [x] gpt-4o-mini vs gpt-4o
+  - [~] denso vs híbrido / k candidatos: cubierto en `eval_retrieval` (Bloque B)
+- [~] **1.17 Análisis de errores.** `src/analisis_errores.py` listo; corre tras las
+  evaluaciones finales.
+- [~] **1.18 Corrida final sobre test.** En curso.
+- [x] **1.19 Costo y latencia.** En cada fila del jsonl (costo_1000casos_usd, seg/caso).
 
 ### Bloque E: Entregable de Fase 1
 
