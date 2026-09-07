@@ -56,6 +56,11 @@ correctos: añade los que falten con tu conocimiento y descarta los que no corre
 
 Devuelve JSON: {"codigos": [{"codigo": "N39.0", "evidencia": "cita"}, ...]}"""
 
+SISTEMA_MIN = """\
+Eres un codificador clínico. Dado un caso clínico en español, devuelve la lista de \
+códigos de diagnóstico CIE-10-ES del episodio (principal y secundarios) en JSON:
+{"codigos": [{"codigo": "N39.0", "evidencia": "cita"}, ...]}"""
+
 # Casos de train usados como ejemplos few-shot (elegidos por diversidad de aparato).
 FEW_SHOT_IDS = ["S0004-06142005000700014-1", "S1130-01082007000200008-1"]
 
@@ -103,6 +108,7 @@ class Codificador:
         modelo: str = "gpt-4o-mini",
         temperatura: float = 0.0,
         few_shot: bool = False,
+        prompt_min: bool = False,
     ) -> None:
         load_dotenv(RAIZ / ".env")
         from openai import OpenAI
@@ -110,6 +116,7 @@ class Codificador:
         self.cliente = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
         self.modelo = modelo
         self.temperatura = temperatura
+        self.sistema = SISTEMA_MIN if prompt_min else SISTEMA
         dicc = cargar_diccionario("D")
         self._validos = set(dicc["codigo"])
         self._desc = dict(zip(dicc["codigo"], dicc["desc_es"]))
@@ -169,7 +176,7 @@ class Codificador:
         from openai import RateLimitError
 
         mensajes = [
-            {"role": "system", "content": SISTEMA},
+            {"role": "system", "content": self.sistema},
             *self._few_shot_msgs,
             {"role": "user", "content": "\n\n".join(partes)},
         ]

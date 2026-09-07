@@ -92,6 +92,7 @@ def main() -> None:
     ap.add_argument("--modelo", default="gpt-4o-mini")
     ap.add_argument("--sin-candidatos", action="store_true")
     ap.add_argument("--few-shot", action="store_true")
+    ap.add_argument("--prompt-min", action="store_true")
     a = ap.parse_args()
 
     casos = cargar_casos(a.split).head(a.n)
@@ -101,7 +102,7 @@ def main() -> None:
 
     etq = (f"{a.modelo}"
            f"{'_sincand' if a.sin_candidatos else '_concand'}"
-           f"{'_fewshot' if a.few_shot else ''}")
+           f"{"_fewshot" if a.few_shot else ""}{"_pmin" if a.prompt_min else ""}")
     cache_pred = DIR_INDICE / f"pred_{a.split}_{etq}.json"
     predicho: dict = json.loads(cache_pred.read_text()) if cache_pred.exists() else {}
 
@@ -118,7 +119,7 @@ def main() -> None:
             naluc.append(predicho[cid].get("aluc", 0))
         else:
             if cod is None:
-                cod = Codificador(modelo=a.modelo, few_shot=a.few_shot)
+                cod = Codificador(modelo=a.modelo, few_shot=a.few_shot, prompt_min=a.prompt_min)
             r = cod.codificar(texto, candidatos=cand.get(cid))
             pred = r.codigos
             predicho[cid] = {"codigos": pred, "aluc": len(r.alucinados)}

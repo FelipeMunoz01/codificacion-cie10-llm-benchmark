@@ -16,6 +16,7 @@ rank-bm25         # búsqueda léxica
 
 # Evaluación y utilidades
 scikit-learn      # métricas
+matplotlib        # figuras del análisis
 tqdm              # barras de progreso en los bucles de evaluación
 
 # Notebook
