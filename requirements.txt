@@ -1,0 +1,24 @@
+# Núcleo
+pandas
+numpy
+openpyxl          # leer el diccionario CIE-10 en .xlsx
+python-dotenv     # cargar la API key desde .env
+
+# LLM y embeddings
+openai            # cliente de la API de OpenAI (LLM + embeddings)
+pydantic          # esquema de la salida estructurada del codificador
+
+# Recuperación
+# Búsqueda densa: fuerza bruta con numpy + scikit-learn. A ~20 mil vectores es
+# instantánea; faiss solo aporta con millones de vectores y no tiene wheel para
+# Python 3.14. Ver DECISIONES.md.
+rank-bm25         # búsqueda léxica
+
+# Evaluación y utilidades
+scikit-learn      # métricas
+tqdm              # barras de progreso en los bucles de evaluación
+
+# Notebook
+jupyter
+
+# Nota: las versiones se congelan (pip freeze) antes de publicar el repo, paso 1.22.

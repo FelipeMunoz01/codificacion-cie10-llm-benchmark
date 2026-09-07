@@ -1,0 +1,23 @@
+# Sistema
+.DS_Store
+
+# Python
+.venv/
+venv/
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
+# Claves y config local
+.env
+
+# Herramientas
+.claude/
+
+# Datos crudos (no se versionan; se descargan o se copian aparte)
+data/codiesp/
+data/raw/
+data/*.xlsx
+
+# Sí se versiona (excepción explícita): el índice ya calculado
+!data/index/
