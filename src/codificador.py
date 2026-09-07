@@ -93,6 +93,18 @@ def normalizar_codigo(c: str) -> str:
     return re.sub(r"\s+", "", str(c)).lower()
 
 
+_PAR = re.compile(r'\{\s*"codigo"\s*:\s*"([^"]+)"\s*,\s*"evidencia"\s*:\s*"([^"]*)"\s*\}')
+
+
+def _parse_json_tolerante(txt: str) -> dict:
+    """json.loads normal; si la respuesta viene truncada, rescata los pares completos."""
+    try:
+        return json.loads(txt)
+    except json.JSONDecodeError:
+        pares = _PAR.findall(txt or "")
+        return {"codigos": [{"codigo": c, "evidencia": e} for c, e in pares]}
+
+
 @dataclass
 class ResultadoCodificacion:
     codigos: list[str]                       # válidos, normalizados, en orden del LLM
@@ -187,13 +199,14 @@ class Codificador:
                     temperature=self.temperatura,
                     messages=mensajes,
                     response_format={"type": "json_schema", "json_schema": _ESQUEMA},
+                    max_completion_tokens=4000,
                 )
                 break
             except RateLimitError:
                 time.sleep(2 ** intento + 2)
         else:
             raise RuntimeError("rate limit persistente")
-        datos = json.loads(resp.choices[0].message.content)
+        datos = _parse_json_tolerante(resp.choices[0].message.content)
 
         codigos: list[str] = []
         evidencias: dict[str, str] = {}
