@@ -16,7 +16,7 @@ un benchmark público, con análisis de errores y ablations.
 
 ## Estado actual
 
-`FASE 0 - en curso (0.1 a 0.4 cerradas, ver DECISIONES.md)`
+`FASE 0 - completa. Siguiente: Fase 1, Bloque A (datos).`
 
 Marca cada casilla al terminar. "Listo cuando" define el criterio de término de cada paso.
 
@@ -33,9 +33,8 @@ Marca cada casilla al terminar. "Listo cuando" define el criterio de término de
 - [x] **0.5 Entorno de trabajo.** Estructura de carpetas, `requirements.txt`,
   `.gitignore`, `.env` con la key validada (HTTP 200), `venv` en `.venv/` con todo
   instalado. Sin `faiss-cpu` (ver DECISIONES.md).
-- [ ] **0.6 Primer commit.** `git init` dentro de `proyecto 7/`, commit inicial con la
-  estructura y los tres `.md`. Sin `Co-Authored-By`. Sin crear el repo en GitHub todavía.
-  *Listo cuando:* `git log` muestra el commit inicial.
+- [x] **0.6 Primer commit.** `git init` en `proyecto 7/`, rama `main`, commit `9780c88`
+  sin `Co-Authored-By`. Repo local, sin GitHub todavía.
 
 ---
 
