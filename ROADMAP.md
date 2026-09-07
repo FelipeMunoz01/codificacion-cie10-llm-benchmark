@@ -16,15 +16,20 @@ un benchmark público, con análisis de errores y ablations.
 
 ## Estado actual
 
-`FASE 1 - Bloque A completo (1.1 a 1.4). Siguiente: Bloque B (índice de recuperación).`
+`FASE 1 - Bloques A y B completos. Siguiente: Bloque C (codificador LLM).`
 
-Hallazgos de Bloque A (detalle en `resultados/eda_bloque_a.md`):
-- 500 / 250 / 250 casos (train / dev / test), ~11 códigos de diagnóstico por caso,
-  textos de ~350 palabras.
-- CodiEsp-D es multietiqueta a nivel de caso, sin principal vs secundario (ver DECISIONES).
+Hallazgos de Bloque A (`resultados/eda_bloque_a.md`):
+- 500 / 250 / 250 casos, ~11 códigos de diagnóstico por caso, textos ~350 palabras.
+- CodiEsp-D es multietiqueta a nivel de caso, sin principal vs secundario.
 - Diccionario CIE-10-ES: 98.288 códigos, cobertura del gold 100%.
-- Solo el 62% de los códigos de test aparece en train: argumento fuerte para el enfoque
-  RAG + LLM sin entrenamiento, que no depende de haber visto antes el código.
+- Solo el 62% de los códigos de test aparece en train.
+
+Hallazgos de Bloque B (`resultados/eval_retrieval_dev.md`):
+- Consulta por frases + híbrido: recall@200 ≈ 0,31; techo de la unión 0,52.
+- El 65% del gold no recuperado son códigos vagos sin anclaje textual.
+- **Diseño revisado**: la recuperación da pistas, no una lista cerrada. El LLM puede
+  proponer códigos fuera de las pistas y todo se valida contra los 98.288 válidos.
+  Ablation obligatorio: LLM solo vs LLM + candidatos (ver DECISIONES).
 
 Marca cada casilla al terminar. "Listo cuando" define el criterio de término de cada paso.
 
@@ -61,20 +66,17 @@ Marca cada casilla al terminar. "Listo cuando" define el criterio de término de
 
 ### Bloque B: Base de conocimiento e índice de recuperación
 
-- [ ] **1.5 Normalizar el diccionario.** Una fila por código: `codigo`, `descripcion`,
-  `notas` (incluye/excluye), `categoria_padre`.
-  *Listo cuando:* hay un parquet limpio del diccionario.
-- [ ] **1.6 Generar embeddings del diccionario** (una sola vez) y guardarlos en un índice
-  local (FAISS o Chroma).
-  *Listo cuando:* el índice se carga desde disco y responde consultas.
-- [ ] **1.7 Búsqueda densa.** Función `texto -> top-k códigos candidatos`.
-  *Listo cuando:* devuelve k candidatos razonables para 5 textos de ejemplo.
-- [ ] **1.8 Búsqueda léxica BM25 + fusión.** Añadir BM25 y una función que combine ambas
-  listas (híbrida).
-  *Listo cuando:* la función híbrida devuelve una lista fusionada y ordenada.
-- [ ] **1.9 Evaluar SOLO el retrieval.** `recall@k` (¿está el código correcto entre los k?)
-  para k = 5, 10, 20, 50. Este número es el techo de todo lo que sigue.
-  *Listo cuando:* hay una tabla recall@k para denso, léxico e híbrido.
+- [x] **1.5 Normalizar el diccionario.** `src/indice.py`: una fila por código
+  (`codigo`, `desc_es`, `texto`). El fichero de códigos válidos no trae jerarquía ni
+  notas incluye/excluye, así que el documento indexado es "CÓDIGO: descripción".
+- [x] **1.6 Embeddings del diccionario.** `text-embedding-3-small` dim 512, 98.288
+  vectores, ~3 min, ~USD 0,06. En `data/index/` (no versionado, manifiesto sí).
+- [x] **1.7 Búsqueda densa.** `Recuperador.denso` (numpy, coseno). OK en consultas
+  cortas ("cálculo del riñón" -> N20.0).
+- [x] **1.8 BM25 disperso + fusión RRF.** `_BM25Disperso` (scipy sparse; `rank_bm25`
+  era 80x más lento). `Recuperador.hibrido` y `.candidatos` (por frases).
+- [x] **1.9 Evaluar el retrieval.** `src/eval_retrieval.py` ->
+  `resultados/eval_retrieval_dev.md`. Techo de recuperación ~0,52; ver diseño revisado.
 
 ### Bloque C: El codificador (LLM)
 

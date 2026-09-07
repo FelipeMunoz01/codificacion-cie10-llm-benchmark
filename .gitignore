@@ -19,5 +19,7 @@ data/codiesp/
 data/raw/
 data/*.xlsx
 
-# Sí se versiona (excepción explícita): el índice ya calculado
-!data/index/
+# El índice se regenera con src/indice.py (diccionario derivado + embeddings de la API).
+# Solo se versiona el manifiesto, que documenta el modelo exacto usado.
+data/index/*
+!data/index/manifiesto_D.json

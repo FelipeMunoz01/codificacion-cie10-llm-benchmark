@@ -106,7 +106,56 @@ procedimientos). No son compatibles. La base de conocimiento del proyecto es la
 - `codiesp-P_codes.tsv`: 87.170 procedimientos.
 - Cobertura verificada: el 100% de los códigos gold de train/dev/test está en esta lista.
 
-El `CIE-10.xlsx` OMS se conserva en `data/` solo como referencia, no se usa.
+El `CIE-10.xlsx` OMS se conserva en `data/` solo como referencia, no se usa **en Fase 1**.
+
+### Divergencia España / Chile en los sistemas de codificación (relevante para Fases 2-3)
+
+| | CodiEsp / España | Chile (CMBD / GRD) |
+|---|---|---|
+| Diagnósticos | CIE-10-ES (≈ ICD-10-CM), 5-7 caracteres | CIE-10 OMS 2013, 3-4 caracteres |
+| Procedimientos | ICD-10-PCS, 7 caracteres alfanuméricos | CIE-9-MC v32 (2014), numéricos `xx.xx` |
+
+- Fase 1 (pública) usa CIE-10-ES, sin cambios.
+- El lado chileno (privado) reusa la MISMA arquitectura cambiando solo el diccionario
+  indexado y el prompt: diagnósticos con el `CIE-10.xlsx` OMS (que SÍ es el correcto
+  para Chile), procedimientos con una tabla CIE-9-MC en español (pendiente de conseguir).
+
+### Insumo de Fase 2-3: base CMBD chilena
+
+CMBD (Conjunto Mínimo Básico de Datos) del sistema GRD, egresos codificados de todos los
+hospitales públicos de Chile 2019-2025. Diagnóstico principal + secundarios en CIE-10 OMS,
+procedimientos en CIE-9-MC. Pública, poco explotada.
+
+- Si incluye la glosa de texto libre del codificador: pares (texto, código) reales =
+  set de evaluación "plata" para la aplicación chilena (Fase 2).
+- Si son solo códigos: co-ocurrencia para reglas de auditoría (CC/MCC, coherencia dx-px),
+  tasas base para IR-GRD, priors de frecuencia.
+- No entra en Fase 1: rompería la comparabilidad con el leaderboard de CodiEsp.
+- Pendiente: confirmar si el CMBD trae glosa o solo códigos.
+
+### Bloque B: recuperación y diseño revisado del codificador
+
+**Hallazgos** (detalle en `resultados/eval_retrieval_dev.md`):
+
+- Consulta por documento completo: inútil (recall@200 ≈ 0,11). Un caso tiene ~11
+  diagnósticos y un embedding no los cubre.
+- Consulta por frases + híbrido denso/BM25: recall@200 ≈ 0,31; unión sin recorte 0,52.
+- Ese 0,52 es el **techo de la recuperación** sobre descripciones. El 65% del gold no
+  recuperado son códigos vagos ("no especificado", "NEOM", "otros..."), sin anclaje
+  textual. Ajustar `k_frase` o expandir abreviaturas no lo mueve.
+
+**Decisión de diseño para Bloque C:**
+
+- La recuperación NO es una lista cerrada. Aporta candidatos como pistas (frase-híbrido,
+  top ~150) para los diagnósticos específicos.
+- El LLM puede **proponer códigos fuera de las pistas** con su propio conocimiento de
+  CIE-10 (ahí están los códigos vagos que la recuperación no alcanza).
+- Todo código emitido se **valida contra los 98.288 códigos válidos**; los inventados
+  se descartan y cuentan como tasa de alucinación.
+- Ablation obligatorio: *LLM solo* vs *LLM + candidatos*.
+
+Config de recuperación fijada: `frase-hibrido`, `k_frase=30`, RRF, tope 150 candidatos.
+Segmentación por frases y expansión de abreviaturas en `src/recuperar.py`.
 
 ### 0.5 Entorno
 

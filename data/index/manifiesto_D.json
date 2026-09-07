@@ -1,0 +1,12 @@
+{
+  "modelo": "text-embedding-3-small",
+  "dimensiones": 512,
+  "n_codigos": 98288,
+  "hash_textos": "e943b00c8df01ec9",
+  "fecha": "2026-09-07",
+  "forma_embeddings": [
+    98288,
+    512
+  ],
+  "nota": "normalizada L2; en disco float16; regenerar con src/indice.py"
+}
