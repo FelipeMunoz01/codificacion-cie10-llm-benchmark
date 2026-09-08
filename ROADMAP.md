@@ -1,4 +1,4 @@
-# Roadmap: Asistente de codificación CIE-10 / CIE-9-MC con RAG + LLM, evaluado
+# Roadmap: codificación CIE-10 con recuperación + LLM (estudio de benchmark)
 
 Proyecto de portafolio (y base de un posible servicio) para asistir la codificación
 clínica bajo el modelo IR-GRD de Chile. La idea central no es "chatear con documentos",
