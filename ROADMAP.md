@@ -16,7 +16,7 @@ un benchmark público, con análisis de errores y ablations.
 
 ## Estado actual
 
-`FASE 1 - Bloques A-D completos. Falta el entregable (1.20-1.24): notebook y repo público.`
+`FASE 1 COMPLETA y publicada. Opcional: notebook (1.20), post LinkedIn (1.24).`
 
 Resultados finales (`resultados/`, figuras en `figuras/`):
 - **test 250, gpt-4o-mini + candidatos: MAP 0,090 exacto / 0,267 categoría** (dev: 0,092
@@ -122,7 +122,7 @@ Marca cada casilla al terminar. "Listo cuando" define el criterio de término de
 - [x] **1.22 Limpiar `src/`.** `src/reglas.py` es la interfaz stub con 2 reglas de
   ejemplo y la nota de "versión de producción privada". `src/descargar_datos.py` añadido.
   `requirements.txt` sin `rank-bm25`, `requirements.lock.txt` congelado.
-- [ ] **1.23 Publicar el repo público.** Falta confirmar nombre y `gh repo create`.
+- [x] **1.23 Publicar el repo público.** https://github.com/FelipeMunoz01/codificacion-cie10-llm-benchmark
 - [ ] **1.24 Writeup corto para LinkedIn.**
 
 ---
