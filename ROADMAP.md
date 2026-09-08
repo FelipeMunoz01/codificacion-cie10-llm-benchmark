@@ -46,7 +46,7 @@ Marca cada casilla al terminar. "Listo cuando" define el criterio de término de
 
 ## FASE 0 - Preparación y decisiones (sin código todavía)
 
-- [x] **0.1 Nombre del repo público.** `asistente-codificacion-clinica-cie10`.
+- [x] **0.1 Nombre del repo público.** `codificacion-cie10-llm-benchmark`.
 - [x] **0.2 Estructura de dos repos.** Definida en `DECISIONES.md`.
 - [x] **0.3 Alcance de Fase 1 por escrito.** Cerrado en `DECISIONES.md`.
 - [x] **0.4 Proveedor de LLM y de embeddings.** OpenAI (`gpt-4o-mini` + `gpt-4o`;

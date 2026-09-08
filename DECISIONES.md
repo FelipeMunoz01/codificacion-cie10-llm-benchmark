@@ -8,12 +8,11 @@ Registro de decisiones tomadas, con su fecha y el motivo. Igual que en proyecto5
 
 ### 0.1 Nombre del repo público
 
-**`asistente-codificacion-clinica-cie10`**
+**`codificacion-cie10-llm-benchmark`** (renombrado tras cerrar Fase 1: el README quedó
+como estudio de benchmark, no como asistente/servicio).
 
 - CodiEsp es dato clínico de España, así que se evita "chile" en el nombre del repo
   público. Lo específico de Chile (IR-GRD, MINSAL) vive en el repo privado.
-- Se prefirió el enfoque "asistente / servicio" por sobre atar el nombre al dataset,
-  por si más adelante se amplía a otros corpus.
 
 ### 0.2 Estructura de dos repos (método del equilibrio)
 
