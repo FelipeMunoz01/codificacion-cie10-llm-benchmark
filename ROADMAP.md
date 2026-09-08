@@ -16,15 +16,16 @@ un benchmark público, con análisis de errores y ablations.
 
 ## Estado actual
 
-`FASE 1 - Bloques A, B y C hechos. Bloque D en curso (dev/test completos + análisis).`
+`FASE 1 - Bloques A-D completos. Falta el entregable (1.20-1.24): notebook y repo público.`
 
-Resultados preliminares del codificador (dev, gpt-4o-mini con candidatos):
-- MAP exacto ~0,10, MAP categoría (3 car.) ~0,29, alucinación ~0,05/caso.
-- gpt-4o casi dobla: MAP exacto ~0,23, categoría ~0,41 (14x el costo).
-- Los candidatos casi no mueven el MAP exacto pero cortan la alucinación 8x
-  (0,39 -> 0,05) y suben la especificidad. Su valor es anclar, no acertar más.
-- El prompt exhaustivo es clave: el prompt mínimo predice 6 códigos/caso (gold ~13)
-  y el recall cae a 0,11.
+Resultados finales (`resultados/`, figuras en `figuras/`):
+- **test 250, gpt-4o-mini + candidatos: MAP 0,090 exacto / 0,267 categoría** (dev: 0,092
+  / 0,274, coincide). SOTA supervisado 2020: 0,593.
+- gpt-4o (dev, 50): MAP 0,196 exacto / 0,366 categoría, ~19x el costo.
+- Candidatos: casi no mueven el MAP exacto, pero alucinación 0,39 -> 0,05/caso.
+- Prompt mínimo: MAP 0,069 (subcodifica: 6 códigos/caso vs gold 13). Few-shot: neutro.
+- Reparto del gold: 16% exacto, 19,5% categoría correcta, 37% códigos vagos sin
+  anclaje, 22% otros no recuperados, 6% estaba en candidatos y no se eligió.
 
 Hallazgos de Bloque A (`resultados/eda_bloque_a.md`):
 - 500 / 250 / 250 casos, ~11 códigos de diagnóstico por caso, textos ~350 palabras.
@@ -107,10 +108,11 @@ Marca cada casilla al terminar. "Listo cuando" define el criterio de término de
   - [x] few-shot vs zero-shot
   - [x] gpt-4o-mini vs gpt-4o
   - [~] denso vs híbrido / k candidatos: cubierto en `eval_retrieval` (Bloque B)
-- [~] **1.17 Análisis de errores.** `src/analisis_errores.py` listo; corre tras las
-  evaluaciones finales.
-- [~] **1.18 Corrida final sobre test.** En curso.
-- [x] **1.19 Costo y latencia.** En cada fila del jsonl (costo_1000casos_usd, seg/caso).
+- [x] **1.17 Análisis de errores.** `src/analisis_errores.py` ->
+  `resultados/analisis_errores_gpt-4o-mini_concand.md`.
+- [x] **1.18 Corrida final sobre test.** MAP 0,090; coincide con dev; comparación con el
+  SOTA supervisado en el README.
+- [x] **1.19 Costo y latencia.** En el jsonl y en `figuras/fig_costo_map.png`.
 
 ### Bloque E: Entregable de Fase 1
 
