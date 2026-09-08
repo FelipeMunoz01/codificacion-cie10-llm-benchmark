@@ -119,7 +119,7 @@ python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 cp .env.example .env          # y completar OPENAI_API_KEY
 
-# descargar CodiEsp (corpus Zenodo 3837305 + códigos Zenodo 3706838) en data/codiesp/
+python src/descargar_datos.py                         # corpus + códigos en data/codiesp/
 python src/indice.py                                  # embeddings del catálogo (~USD 0,06)
 python src/eval_retrieval.py --split dev
 python src/eval_codificador.py --split dev --n 250

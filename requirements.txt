@@ -9,10 +9,9 @@ openai            # cliente de la API de OpenAI (LLM + embeddings)
 pydantic          # esquema de la salida estructurada del codificador
 
 # Recuperación
-# Búsqueda densa: fuerza bruta con numpy + scikit-learn. A ~20 mil vectores es
-# instantánea; faiss solo aporta con millones de vectores y no tiene wheel para
-# Python 3.14. Ver DECISIONES.md.
-rank-bm25         # búsqueda léxica
+# Búsqueda densa por fuerza bruta con numpy (a ~98 mil vectores es instantánea; faiss
+# solo aporta con millones y no tiene wheel para Python 3.14). BM25 se implementa sobre
+# una matriz dispersa de scipy (rank-bm25 de PyPI era ~80x más lento). Ver DECISIONES.md.
 
 # Evaluación y utilidades
 scikit-learn      # métricas
