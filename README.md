@@ -106,6 +106,19 @@ a ~19 veces el costo por caso.
 - La lista oficial de códigos no trae notas de inclusión/exclusión ni jerarquía, que
   ayudarían a la recuperación.
 - La tajada de gpt-4o son 50 casos de dev; su intervalo de confianza es ancho.
+- **El gold tiene decisiones defendibles de varias formas.** Lo anotaron humanos y hay
+  desacuerdo entre anotadores. Ejemplo (caso `S0004-06142005000900016-1`): mujer de 29
+  años con estenosis de la unión pieloureteral causada por un hemangioma cavernoso; el
+  gold la codifica como `Q62.11` (oclusión *congénita*) y añade `N20.0` (cálculo) pese a
+  que el texto dice "no antecedentes de nefrolitiasis" y la anatomía patológica encontró
+  un hemangioma, no un cálculo. Parte de lo que se cuenta como error del LLM son casos
+  así, donde su elección es tan defendible como la del gold. Por eso la coincidencia por
+  categoría de 3 caracteres es una lente más justa que la exacta.
+- **Las convenciones de codificación de CodiEsp no son las de Chile.** CodiEsp sigue
+  ICD-10-CM: un solo código por neoplasia (sin morfología CIE-O aparte), no se codifican
+  hallazgos del capítulo R cuando hay diagnóstico conocido, y los códigos son de 5-7
+  caracteres. El GRD chileno usa CIE-10 OMS (3-4 caracteres) + morfología CIE-O + CIE-9-MC
+  para procedimientos.
 
 ## Herramientas
 
