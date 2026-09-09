@@ -36,12 +36,12 @@ PRECIO = {  # USD por 1M tokens (prompt, completion)
 }
 
 
-def candidatos_split(split: str, k: int = 150) -> dict[str, list[str]]:
-    ruta = DIR_INDICE / f"cand_{split}.json"
+def candidatos_split(split: str, subtrack: str = "D", k: int = 150) -> dict[str, list[str]]:
+    ruta = DIR_INDICE / f"cand_{split}_{subtrack}.json"
     if ruta.exists():
         return json.loads(ruta.read_text())
     casos = cargar_casos(split)
-    rec = Recuperador()
+    rec = Recuperador(subtrack)
     emb = np.load(DIR_INDICE / f"emb_frases_{split}.npy").astype(np.float32)
     frs = [frases_de(t) for t in casos["texto"]]
     ef, i = [], 0
@@ -88,6 +88,7 @@ def metricas(pred: list[str], gold: set[str], nivel: str = "exacto"):
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--split", default="dev", choices=["train", "dev", "test"])
+    ap.add_argument("--subtrack", default="D", choices=["D", "P"])
     ap.add_argument("--n", type=int, default=50)
     ap.add_argument("--modelo", default="gpt-4o-mini")
     ap.add_argument("--sin-candidatos", action="store_true")
@@ -96,11 +97,11 @@ def main() -> None:
     a = ap.parse_args()
 
     casos = cargar_casos(a.split).head(a.n)
-    gold = cargar_gold(a.split, "D")
+    gold = cargar_gold(a.split, a.subtrack)
     golds = {cid: set(gold.loc[gold["id"] == cid, "codigo"]) for cid in casos["id"]}
-    cand = {} if a.sin_candidatos else candidatos_split(a.split)
+    cand = {} if a.sin_candidatos else candidatos_split(a.split, a.subtrack)
 
-    etq = (f"{a.modelo}"
+    etq = (f"{a.subtrack}_{a.modelo}"
            f"{'_sincand' if a.sin_candidatos else '_concand'}"
            f"{"_fewshot" if a.few_shot else ""}{"_pmin" if a.prompt_min else ""}")
     cache_pred = DIR_INDICE / f"pred_{a.split}_{etq}.json"
@@ -119,7 +120,8 @@ def main() -> None:
             naluc.append(predicho[cid].get("aluc", 0))
         else:
             if cod is None:
-                cod = Codificador(modelo=a.modelo, few_shot=a.few_shot, prompt_min=a.prompt_min)
+                cod = Codificador(modelo=a.modelo, few_shot=a.few_shot,
+                                  prompt_min=a.prompt_min, subtrack=a.subtrack)
             r = cod.codificar(texto, candidatos=cand.get(cid))
             pred = r.codigos
             predicho[cid] = {"codigos": pred, "aluc": len(r.alucinados)}
@@ -152,7 +154,8 @@ def main() -> None:
         "F1_cat3": prom(c3, 2),
         "R_cat3": prom(c3, 1),
         "cods_pred/caso": round(float(np.mean(npred)), 1),
-        "cods_gold/caso": round(gold.groupby("id").size().reindex(casos["id"]).mean(), 1),
+        "cods_gold/caso": round(
+            gold.groupby("id").size().reindex(casos["id"]).fillna(0).mean(), 1),
         "alucinac/caso": round(float(np.mean(naluc)), 2),
         "costo_usd_corrida": round(costo, 3),
         "costo_1000casos_usd": round(costo / n_api * 1000, 2) if n_api else None,

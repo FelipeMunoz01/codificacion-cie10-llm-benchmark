@@ -64,13 +64,14 @@ def recall_tabla(nombre: str, cands: list[list[str]], golds: list[set[str]]) -> 
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--split", default="dev", choices=["train", "dev", "test"])
-    split = ap.parse_args().split
+    ap.add_argument("--subtrack", default="D", choices=["D", "P"])
+    args = ap.parse_args(); split = args.split; subtrack = args.subtrack
 
     casos = cargar_casos(split)
-    gold = cargar_gold(split, "D")
+    gold = cargar_gold(split, subtrack)
     golds = [set(gold.loc[gold["id"] == cid, "codigo"]) for cid in casos["id"]]
 
-    rec = Recuperador()
+    rec = Recuperador(subtrack)
 
     # embeddings de documento completo (baseline) y de frases (cacheados)
     emb_doc = _cache_emb(f"emb_casos_{split}", casos["texto"].tolist(), rec._cliente)
@@ -125,13 +126,13 @@ def main() -> None:
     tabla = pd.DataFrame(filas)
 
     buf = io.StringIO()
-    buf.write(f"# Recuperación pura - recall@k (split {split})\n\n")
+    buf.write(f"# Recuperación pura - recall@k (split {split}, subtrack {subtrack})\n\n")
     buf.write(f"Embeddings: {MODELO_EMB} dim {DIMS}. {len(casos)} casos, "
               f"{n_fr:.1f} frases/caso, {gold.groupby('id').size().mean():.1f} códigos/caso.\n\n")
     buf.write("recall@k = fracción de códigos gold del caso presentes entre los k "
               "candidatos, promediada sobre casos.\n\n")
     buf.write(tabla_md(tabla) + "\n")
-    (RAIZ / "resultados" / f"eval_retrieval_{split}.md").write_text(buf.getvalue(), encoding="utf-8")
+    (RAIZ / "resultados" / f"eval_retrieval_{split}_{subtrack}.md").write_text(buf.getvalue(), encoding="utf-8")
     print("\n" + buf.getvalue())
 
 

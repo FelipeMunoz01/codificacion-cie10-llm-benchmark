@@ -155,8 +155,9 @@ def _topk(puntajes: np.ndarray, k: int) -> np.ndarray:
 
 
 class Recuperador:
-    def __init__(self) -> None:
-        self.dicc, self.emb = cargar_indice()  # emb (N, DIMS) float32 normalizada
+    def __init__(self, subtrack: str = "D") -> None:
+        self.subtrack = subtrack.upper()
+        self.dicc, self.emb = cargar_indice(subtrack)  # emb (N, DIMS) float32 normalizada
         self.codigos = self.dicc["codigo"].to_numpy()
         load_dotenv(RAIZ / ".env")
         from openai import OpenAI

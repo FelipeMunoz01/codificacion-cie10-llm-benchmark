@@ -1,17 +1,17 @@
-"""Bloque B: base de conocimiento e índice de recuperación (subtrack D).
+"""Bloque B: base de conocimiento e índice de recuperación.
 
-Construye, a partir de la lista oficial de códigos CIE-10-ES:
-  - un diccionario normalizado (código + descripción)      -> data/index/dicc_D.csv
-  - embeddings de cada código (OpenAI text-embedding-3-small, dimensions=512)
-                                                            -> data/index/emb_D.npy
-  - un manifiesto con el modelo, dimensión, fecha y hash    -> data/index/manifiesto_D.json
+Para el subtrack elegido (D diagnósticos, P procedimientos) construye, a partir de la
+lista oficial de códigos CIE-10-ES:
+  - un diccionario normalizado (código + descripción)  -> data/index/dicc_<S>.csv
+  - embeddings de cada código (text-embedding-3-small, dimensions=512)
+                                                        -> data/index/emb_<S>.npy
+  - un manifiesto con el modelo, dimensión, fecha, hash -> data/index/manifiesto_<S>.json
 
-Nada de esto se versiona (ver .gitignore). Se regenera con `python src/indice.py`
-(coste puntual ~USD 0,06). El manifiesto documenta el modelo exacto usado.
+Nada de esto se versiona (ver .gitignore). Se regenera con `python src/indice.py`.
 
 Uso:
-    python src/indice.py            # construye lo que falte
-    python src/indice.py --forzar   # reconstruye aunque exista
+    python src/indice.py --subtrack D
+    python src/indice.py --subtrack P --forzar
 """
 
 from __future__ import annotations
@@ -37,19 +37,21 @@ MODELO_EMB = "text-embedding-3-small"
 DIMS = 512
 LOTE = 1000  # inputs por petición a la API
 
-RUTA_CSV = DIR_INDICE / "dicc_D.csv"
-RUTA_EMB = DIR_INDICE / "emb_D.npy"
-RUTA_MANIF = DIR_INDICE / "manifiesto_D.json"
+
+def _rutas(subtrack: str) -> tuple[Path, Path, Path]:
+    s = subtrack.upper()
+    return (DIR_INDICE / f"dicc_{s}.csv",
+            DIR_INDICE / f"emb_{s}.npy",
+            DIR_INDICE / f"manifiesto_{s}.json")
 
 
 def _texto_codigo(cod: str, desc: str) -> str:
-    """Documento que se indexa por cada código."""
     return f"{cod.upper()}: {desc}"
 
 
-def construir_diccionario() -> pd.DataFrame:
+def construir_diccionario(subtrack: str = "D") -> pd.DataFrame:
     """codigo, desc_es, texto (lo que se indexa)."""
-    dicc = cargar_diccionario("D")[["codigo", "desc_es"]].copy()
+    dicc = cargar_diccionario(subtrack)[["codigo", "desc_es"]].copy()
     dicc["texto"] = [_texto_codigo(c, d) for c, d in zip(dicc["codigo"], dicc["desc_es"])]
     return dicc.reset_index(drop=True)
 
@@ -92,36 +94,39 @@ def generar_embeddings(textos: list[str]) -> np.ndarray:
     return embed_textos(textos)
 
 
-def cargar_indice() -> tuple[pd.DataFrame, np.ndarray]:
-    """Devuelve (diccionario, embeddings float32 normalizados)."""
-    dicc = pd.read_csv(RUTA_CSV, dtype=str)
-    emb = np.load(RUTA_EMB).astype(np.float32)
+def cargar_indice(subtrack: str = "D") -> tuple[pd.DataFrame, np.ndarray]:
+    """Devuelve (diccionario, embeddings float32 normalizados) del subtrack."""
+    ruta_csv, ruta_emb, _ = _rutas(subtrack)
+    dicc = pd.read_csv(ruta_csv, dtype=str)
+    emb = np.load(ruta_emb).astype(np.float32)
     return dicc, emb
 
 
-def construir(forzar: bool = False) -> None:
+def construir(subtrack: str = "D", forzar: bool = False) -> None:
     DIR_INDICE.mkdir(parents=True, exist_ok=True)
+    ruta_csv, ruta_emb, ruta_manif = _rutas(subtrack)
 
-    dicc = construir_diccionario()
-    dicc.to_csv(RUTA_CSV, index=False)
-    print(f"diccionario: {len(dicc):,} códigos -> {RUTA_CSV.relative_to(RAIZ)}")
+    dicc = construir_diccionario(subtrack)
+    dicc.to_csv(ruta_csv, index=False)
+    print(f"diccionario {subtrack}: {len(dicc):,} códigos -> {ruta_csv.relative_to(RAIZ)}")
 
     textos = dicc["texto"].tolist()
     hash_actual = _hash_textos(textos)
 
-    if RUTA_EMB.exists() and not forzar:
-        manif = json.loads(RUTA_MANIF.read_text()) if RUTA_MANIF.exists() else {}
+    if ruta_emb.exists() and not forzar:
+        manif = json.loads(ruta_manif.read_text()) if ruta_manif.exists() else {}
         if manif.get("hash_textos") == hash_actual:
-            print(f"embeddings ya al día: {np.load(RUTA_EMB).shape}")
+            print(f"embeddings ya al día: {np.load(ruta_emb).shape}")
             return
         print("el diccionario cambió, se regeneran los embeddings")
 
     print(f"generando embeddings ({MODELO_EMB}, dim={DIMS})...")
     emb = generar_embeddings(textos)
-    np.save(RUTA_EMB, emb.astype(np.float16))  # fp16 en disco
-    RUTA_MANIF.write_text(
+    np.save(ruta_emb, emb.astype(np.float16))
+    ruta_manif.write_text(
         json.dumps(
             {
+                "subtrack": subtrack.upper(),
                 "modelo": MODELO_EMB,
                 "dimensiones": DIMS,
                 "n_codigos": len(dicc),
@@ -134,11 +139,12 @@ def construir(forzar: bool = False) -> None:
             ensure_ascii=False,
         )
     )
-    print(f"embeddings: {emb.shape} -> {RUTA_EMB.relative_to(RAIZ)}")
-    print(f"manifiesto -> {RUTA_MANIF.relative_to(RAIZ)}")
+    print(f"embeddings: {emb.shape} -> {ruta_emb.relative_to(RAIZ)}")
 
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
+    ap.add_argument("--subtrack", default="D", choices=["D", "P"])
     ap.add_argument("--forzar", action="store_true", help="reconstruir aunque exista")
-    construir(forzar=ap.parse_args().forzar)
+    a = ap.parse_args()
+    construir(subtrack=a.subtrack, forzar=a.forzar)

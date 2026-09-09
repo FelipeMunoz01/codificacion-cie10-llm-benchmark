@@ -61,8 +61,42 @@ Eres un codificador clínico. Dado un caso clínico en español, devuelve la lis
 códigos de diagnóstico CIE-10-ES del episodio (principal y secundarios) en JSON:
 {"codigos": [{"codigo": "N39.0", "evidencia": "cita"}, ...]}"""
 
+SISTEMA_P = """\
+Eres un codificador clínico experto en la clasificación de PROCEDIMIENTOS CIE-10-ES \
+(la versión española de la ICD-10-PCS), usada para codificar procedimientos en altas \
+hospitalarias.
+
+Tarea: dado un caso clínico, enumera los códigos de procedimiento CIE-10-ES de todo lo \
+que se le HIZO al paciente durante el episodio, ordenados del más central (el de mayor \
+consumo de recursos, normalmente el quirúrgico) al más accesorio.
+
+Codifica también:
+- estudios de imagen con valor diagnóstico: radiografía, ecografía, TAC, resonancia, \
+gammagrafía, angiografía, pielografía.
+- endoscopias y procedimientos diagnósticos: biopsias, punciones, cateterismos.
+- terapias: transfusión, diálisis, ventilación mecánica, administración de fármacos por \
+vía relevante (quimioterapia, antibióticos IV, trombolíticos).
+- cada procedimiento quirúrgico, incluida la técnica y el abordaje.
+Un caso típico lleva entre 2 y 6 procedimientos. Si no se realizó ningún procedimiento, \
+devuelve una lista vacía.
+
+Reglas:
+- Solo códigos válidos de CIE-10-ES de procedimiento (7 caracteres alfanuméricos, \
+formato "0TB68ZX", "BW03ZZZ").
+- Los códigos candidatos son una ayuda de la búsqueda, NO son exhaustivos ni todos \
+correctos: añade los que falten con tu conocimiento y descarta los que no correspondan.
+- Elige el código más específico que el texto sustente (parte del cuerpo, abordaje, \
+dispositivo, calificador).
+- Para cada código, una cita textual breve del caso como evidencia.
+- No inventes códigos.
+
+Devuelve JSON: {"codigos": [{"codigo": "BW03ZZZ", "evidencia": "cita"}, ...]}"""
+
 # Casos de train usados como ejemplos few-shot (elegidos por diversidad de aparato).
-FEW_SHOT_IDS = ["S0004-06142005000700014-1", "S1130-01082007000200008-1"]
+FEW_SHOT_IDS = {
+    "D": ["S0004-06142005000700014-1", "S1130-01082007000200008-1"],
+    "P": ["S0004-06142005000700014-1", "S1130-01082007000200008-1"],
+}
 
 _ESQUEMA = {
     "name": "codificacion",
@@ -121,6 +155,7 @@ class Codificador:
         temperatura: float = 0.0,
         few_shot: bool = False,
         prompt_min: bool = False,
+        subtrack: str = "D",
     ) -> None:
         load_dotenv(RAIZ / ".env")
         from openai import OpenAI
@@ -128,8 +163,12 @@ class Codificador:
         self.cliente = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
         self.modelo = modelo
         self.temperatura = temperatura
-        self.sistema = SISTEMA_MIN if prompt_min else SISTEMA
-        dicc = cargar_diccionario("D")
+        self.subtrack = subtrack.upper()
+        if prompt_min:
+            self.sistema = SISTEMA_MIN
+        else:
+            self.sistema = SISTEMA_P if self.subtrack == "P" else SISTEMA
+        dicc = cargar_diccionario(self.subtrack)
         self._validos = set(dicc["codigo"])
         self._desc = dict(zip(dicc["codigo"], dicc["desc_es"]))
         # índice sin punto para recuperar códigos que el LLM escribe pegados
@@ -142,9 +181,9 @@ class Codificador:
         from datos import cargar_casos, cargar_gold
 
         casos = cargar_casos("train").set_index("id")["texto"].to_dict()
-        gold = cargar_gold("train", "D")
+        gold = cargar_gold("train", self.subtrack)
         msgs = []
-        for cid in FEW_SHOT_IDS:
+        for cid in FEW_SHOT_IDS[self.subtrack]:
             if cid not in casos:
                 continue
             cods = list(dict.fromkeys(gold.loc[gold["id"] == cid, "codigo"]))
