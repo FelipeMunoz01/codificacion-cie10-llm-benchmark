@@ -96,6 +96,32 @@ a ~19 veces el costo por caso.
 - **Análisis de errores** (`src/analisis_errores.py`): clasifica cada código gold y cada
   código predicho por tipo de acierto o fallo.
 
+## Extensión a procedimientos (CodiEsp-P)
+
+Todo el pipeline acepta un subtrack (`--subtrack D|P`) y se reutiliza sin cambios para
+procedimientos, indexando el catálogo ICD-10-PCS en español (87.170 códigos) en vez del
+de diagnósticos. El resultado es peor, y por razones estructurales:
+
+| | MAP exacto | MAP categoría (3 car.) | techo de recuperación | códigos/caso |
+|---|---|---|---|---|
+| diagnósticos (CodiEsp-D) | 0,090 | 0,267 | 0,52 | ~11 |
+| procedimientos (CodiEsp-P) | 0,014 | 0,156 | 0,27 | ~4 |
+
+- **ICD-10-PCS es hiperespecífico**: códigos de 7 caracteres con descripciones largas
+  ("derivación de ventrículo cerebral a nasofaringe con sustituto de tejido autólogo,
+  abordaje abierto") que no emparejan con el lenguaje de una epicrisis, así que el techo
+  de recuperación cae de 0,52 a 0,27.
+- **El gold incluye procedimientos inferidos**: "estreptomicina intramuscular" se
+  codifica como un PCS de "introducción de antiinfeccioso en vena periférica", algo
+  imposible de recuperar por similitud o de adivinar de forma fiable.
+- La coincidencia exacta sobre 7 caracteres alfanuméricos es, en la práctica, un
+  criterio casi imposible sin entrenamiento supervisado.
+
+Conclusión: RAG + LLM zero-shot no es un enfoque viable para procedimientos en
+ICD-10-PCS. El motor de reglas CIE-9-MC (Fase 2B, para el caso chileno) es un problema
+distinto: usa un catálogo mucho más compacto y las reglas de agrupación son explícitas,
+no aprendidas.
+
 ## Limitaciones
 
 - CodiEsp-D es dato clínico de España (CIE-10-ES ≈ ICD-10-CM). El sistema de Chile usa

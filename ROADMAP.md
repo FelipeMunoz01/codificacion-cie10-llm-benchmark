@@ -16,7 +16,7 @@ un benchmark público, con análisis de errores y ablations.
 
 ## Estado actual
 
-`FASE 1 COMPLETA, publicada y difundida (1.1 a 1.24). Fase 2 = trabajo futuro.`
+`FASE 1 y 2A completas y publicadas. Fase 2B (motor de reglas CIE-9-MC) esperando datos chilenos.`
 
 Resultados finales (`resultados/`, figuras en `figuras/`):
 - **test 250, gpt-4o-mini + candidatos: MAP 0,090 exacto / 0,267 categoría** (dev: 0,092
@@ -126,19 +126,38 @@ Marca cada casilla al terminar. "Listo cuando" define el criterio de término de
 
 ---
 
-## FASE 2 - Procedimientos CIE-9-MC + capa de reglas determinista (parcialmente privado)
+## FASE 2A - Procedimientos sobre CodiEsp-P (público) — CERRADA
 
-- [ ] **2.1** Preparar el diccionario CIE-9-MC de procedimientos, indexar igual que Fase 1.
-- [ ] **2.2** Extender el codificador a procedimiento principal + secundarios.
-- [ ] **2.3** Evaluar procedimientos en el track de procedimientos de CodiEsp.
-- [ ] **2.4** Implementar la capa de reglas como funciones Python puras sobre la salida:
-  - [ ] pasos integrantes / no fragmentar
-  - [ ] vía de acceso inherente (omitir o añadir según el descriptor oficial)
-  - [ ] códigos de combinación / anti-unbundling
-  - [ ] excepciones (respaldo por imagen, doble codificación por técnica)
-- [ ] **2.5** Evaluar con y sin capa de reglas: ¿mejora el F1?, ¿en qué subgrupo?
-- [ ] **2.6** Análisis de errores de procedimientos.
-- [ ] **2.7** Actualizar notebook y README (esto ya vive mayormente en el repo privado).
+Nota de alcance: CodiEsp-P usa **ICD-10-PCS**, no CIE-9-MC. Se hizo con el mismo
+catálogo público del corpus, no con CIE-9-MC (eso es 2B).
+
+- [x] **2A.1** Diccionario ICD-10-PCS (87.170 códigos), indexado igual que Fase 1
+  (`indice.py --subtrack P`).
+- [x] **2A.2-3** Pipeline parametrizado por subtrack (`--subtrack D|P` en `indice.py`,
+  `recuperar.py`, `codificador.py`, `eval_codificador.py`, `eval_retrieval.py`) y
+  evaluado en CodiEsp-P.
+- [x] **2A.4 Resultado:** techo de recuperación 0,27 (vs 0,52 en D); gpt-4o-mini + candidatos
+  MAP 0,014 exacto / 0,156 categoría (dev, n=60). Conclusión: RAG + LLM zero-shot no es
+  viable para procedimientos en ICD-10-PCS (código hiperespecífico de 7 caracteres +
+  gold con procedimientos inferidos). Documentado en el README.
+- [~] Ablations completos de procedimientos (con/sin candidatos, few-shot): no se
+  justifican, el techo de recuperación ya explica el resultado.
+
+## FASE 2B - Motor de reglas CIE-9-MC (privado, caso chileno) — PENDIENTE DE DATOS
+
+Problema distinto al de 2A: catálogo CIE-9-MC (mucho más compacto que ICD-10-PCS) y
+reglas de agrupación explícitas (anti-fragmentación, vía de acceso, códigos de
+combinación), no aprendidas por un LLM. Sin benchmark público, se necesita:
+
+- [ ] **2B.1** Conseguir el catálogo CIE-9-MC en español con descripciones (¿lo tiene
+  Felipe, o se saca de MINSAL/las tablas de proyecto5?).
+- [ ] **2B.2** Definir el set de prueba: ¿el CMBD chileno trae glosa de texto libre
+  junto a los códigos, o son solo códigos? Si trae glosa, es un set de evaluación real;
+  si no, sirve para co-ocurrencia y reglas, no para medir texto -> código.
+- [ ] **2B.3** Implementar las reglas de `src/reglas.py` completas (privado): pasos
+  integrantes, vía de acceso inherente, códigos de combinación, excepciones.
+- [ ] **2B.4** Evaluar con y sin capa de reglas.
+- [ ] **2B.5** Análisis de errores y escritura (repo privado).
 
 ---
 
