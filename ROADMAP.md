@@ -143,21 +143,22 @@ catálogo público del corpus, no con CIE-9-MC (eso es 2B).
 - [~] Ablations completos de procedimientos (con/sin candidatos, few-shot): no se
   justifican, el techo de recuperación ya explica el resultado.
 
-## FASE 2B - Motor de reglas CIE-9-MC (privado, caso chileno) — PENDIENTE DE DATOS
+## FASE 2B - Motor de reglas CIE-9-MC (privado, caso chileno) — EN CURSO, EN OTRO REPO
 
 Problema distinto al de 2A: catálogo CIE-9-MC (mucho más compacto que ICD-10-PCS) y
 reglas de agrupación explícitas (anti-fragmentación, vía de acceso, códigos de
-combinación), no aprendidas por un LLM. Sin benchmark público, se necesita:
+combinación), no aprendidas por un LLM. Vive por completo fuera de este repo público,
+en `proyecto 7 privado/` (git local, sin remoto): datos de hospitales chilenos y reglas
+de negocio no se publican. Este repo solo referencia que existe.
 
-- [ ] **2B.1** Conseguir el catálogo CIE-9-MC en español con descripciones (¿lo tiene
-  Felipe, o se saca de MINSAL/las tablas de proyecto5?).
-- [ ] **2B.2** Definir el set de prueba: ¿el CMBD chileno trae glosa de texto libre
-  junto a los códigos, o son solo códigos? Si trae glosa, es un set de evaluación real;
-  si no, sirve para co-ocurrencia y reglas, no para medir texto -> código.
-- [ ] **2B.3** Implementar las reglas de `src/reglas.py` completas (privado): pasos
-  integrantes, vía de acceso inherente, códigos de combinación, excepciones.
-- [ ] **2B.4** Evaluar con y sin capa de reglas.
-- [ ] **2B.5** Análisis de errores y escritura (repo privado).
+- [x] **2B.1** Catálogo CIE-9-MC conseguido y verificado.
+- [x] **2B.2** CMBD confirmado: solo códigos, sin glosa. Sirve para co-ocurrencia y
+  para auditar las reglas a escala, no para medir texto -> código.
+- [~] **2B.3** 2 de ~30 reglas del prompt de auditoría implementadas y probadas con
+  casos sintéticos (las únicas verificables solo con el catálogo público).
+- [~] **2B.4** Auditadas contra CMBD real de 2 años (hallazgos cuantitativos reales,
+  ver el repo privado). Falta ampliar años y reglas.
+- [ ] **2B.5** Análisis y escritura final (repo privado).
 
 ---
 
